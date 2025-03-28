@@ -26,9 +26,9 @@ const DynamicIsland = () => {
   useEffect(() => {
     if (transcript) {
       const command = transcript.toLowerCase();
-      if (command.includes("expenses")) navigate("/expenses");
-      if (command.includes("income")) navigate("/income");
-      if (command.includes("budget")) navigate("/financial-insights");
+      if (command.includes("go to expenses")) navigate("/expenses");
+      if (command.includes("go to income")) navigate("/income");
+      if (command.includes("go to finance ai")) navigate("/financial-insights");
     }
   }, [transcript, navigate]);
 
