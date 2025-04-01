@@ -110,9 +110,10 @@ const FinancialInsights = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <Sidebar />
+      <Navbar />
       
       <div className="ml-64 min-h-screen">
-        <Navbar />
+        
         
         <div className="container mx-auto px-6 py-8">
           {/* Header */}
