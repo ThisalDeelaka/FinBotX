@@ -65,4 +65,22 @@ const deleteIncome = async (req, res) => {
   }
 };
 
-module.exports = { addIncome, getIncome, updateIncome, deleteIncome };
+const getIncomeSummary = async (req, res) => {
+  try {
+    const summary = await Income.aggregate([
+      { $match: { userId: req.user._id } },
+      {
+        $group: {
+          _id: "$source",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    res.json(summary);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+module.exports = { addIncome, getIncome, updateIncome, deleteIncome, getIncomeSummary };

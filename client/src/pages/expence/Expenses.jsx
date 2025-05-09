@@ -10,11 +10,8 @@ const Expenses = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [totalExpenses, setTotalExpenses] = useState(0);
-
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
   const [editingExpense, setEditingExpense] = useState(null);
-
+  const [isReading, setIsReading] = useState(false);
 
   useEffect(() => {
     fetchExpenses();
@@ -54,7 +51,7 @@ const Expenses = () => {
   };
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
@@ -77,7 +74,9 @@ const Expenses = () => {
           getAuthHeaders()
         );
         setExpensesList(prev =>
-          prev.map(item => item._id === editingExpense._id ? response.data : item)
+          prev.map(item =>
+            item._id === editingExpense._id ? response.data : item
+          )
         );
         toast.success("Expense updated successfully!");
       } else {
@@ -94,16 +93,41 @@ const Expenses = () => {
     }
   };
 
+  const toggleReading = () => {
+    if (isReading) {
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+    } else {
+      const text = document.body.innerText;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 1;
+      window.speechSynthesis.speak(utterance);
+      setIsReading(true);
+      utterance.onend = () => setIsReading(false);
+      utterance.onerror = () => setIsReading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-    
-    <div className="fixed top-0 left-0 right-0 h-16 z-30 bg-white bg-opacity-90 backdrop-blur-lg border-b border-gray-200 shadow-sm">
-      <Navbar />
-    </div>
+      {/* Fixed Header with Navbar and Read Aloud button */}
+      <div className="fixed top-0 left-0 right-0 h-16 z-30 bg-white bg-opacity-90 backdrop-blur-lg border-b border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between h-full px-6">
+          <Navbar />
+          <button
+            onClick={toggleReading}
+            className="text-sm px-4 py-1.5 bg-gradient-to-r from-red-500 to-pink-500 text-white font-medium rounded-lg shadow hover:from-red-600 hover:to-pink-600 transition-all focus:outline-none"
+          >
+            {isReading ? "Stop Reading" : "Read Aloud"}
+          </button>
+        </div>
+      </div>
 
-    <div className="pt-16 flex flex-1">
-      {/* Sidebar */}
-      <Sidebar />
+      <div className="pt-16 flex flex-1">
+        {/* Sidebar */}
+        <Sidebar />
+
         <div className="p-6 max-w-6xl mx-auto">
           <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
@@ -112,7 +136,6 @@ const Expenses = () => {
               </h1>
               <p className="text-slate-500 mt-2">Track and manage your expenses</p>
             </div>
-            
             <div className="mt-4 md:mt-0 p-1 bg-white rounded-lg shadow-sm">
               <div className="text-xs font-medium text-slate-400 px-3 pt-2">Total Expenses</div>
               <div className="text-2xl font-bold text-red-600 px-3 pb-2">
@@ -122,6 +145,7 @@ const Expenses = () => {
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Overview Card */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden border border-slate-100 transform transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
               <div className="bg-gradient-to-r from-red-500 to-pink-500 p-4 text-white">
                 <h2 className="text-lg font-semibold">Expense Overview</h2>
@@ -150,16 +174,17 @@ const Expenses = () => {
                   <div className="pt-2">
                     <div className="text-sm text-slate-500 mb-2">Recent Activity</div>
                     <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-red-500 to-pink-500 rounded-full" 
+                      <div
+                        className="h-full bg-gradient-to-r from-red-500 to-pink-500 rounded-full"
                         style={{ width: `${Math.min(100, (expensesList.length / 10) * 100)}%` }}
-                      ></div>
+                      />
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
+            {/* Form Card */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-slate-100 transform transition-all duration-300 hover:shadow-lg">
               <h2 className="text-lg font-semibold text-slate-700 mb-4 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -167,7 +192,7 @@ const Expenses = () => {
                 </svg>
                 {editingExpense ? "Edit Expense" : "Add New Expense"}
               </h2>
-              
+
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-red-700 text-sm flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -176,7 +201,7 @@ const Expenses = () => {
                   {error}
                 </div>
               )}
-              
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -240,6 +265,7 @@ const Expenses = () => {
             </div>
           </div>
 
+          {/* Records Table */}
           <div className="mt-8 bg-white rounded-xl shadow-md p-6 border border-slate-100 transition-all duration-300 hover:shadow-lg">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-slate-700 flex items-center">
@@ -285,16 +311,16 @@ const Expenses = () => {
                 <table className="min-w-full divide-y divide-slate-200">
                   <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                         Category
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                         Date
                       </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
                         Amount
                       </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -310,10 +336,10 @@ const Expenses = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-slate-500">
-                            {new Date(item.date).toLocaleDateString('en-US', { 
-                              year: 'numeric', 
-                              month: 'short', 
-                              day: 'numeric' 
+                            {new Date(item.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
                             })}
                           </div>
                         </td>
