@@ -10,6 +10,6 @@ router.get("/insights", protect, getFinancialInsights);
 router.post("/query", protect, handleUserQuery); 
 router.post("/general", protect, handleGeneralFinanceQuery);
 router.get("/spending-heatmap", protect, getSpendingHeatMap);
-router.post("/debt-simulation-with-income-expenses", protect, debtSimulationWithIncomeExpenses);
+router.post("/debt-simulation", protect, debtSimulationWithIncomeExpenses);
 
 module.exports = router;

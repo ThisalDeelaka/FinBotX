@@ -195,17 +195,11 @@ const getSpendingHeatMap = async (req, res) => {
 const debtSimulationWithIncomeExpenses = async (req, res) => {
   const { debtAmount, interestRate } = req.body;
 
-  // Fetch user's income and expenses (in LKR)
   const income = await Income.find({ userId: req.user.id });
   const expenses = await Expense.find({ userId: req.user.id });
 
-  // Calculate total income in LKR
   const totalIncome = income.reduce((sum, i) => sum + i.amount, 0);
-
-  // Calculate total expenses in LKR
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-
-  // Calculate available monthly payment in LKR
   const availablePayment = totalIncome - totalExpenses;
 
   if (availablePayment <= 0) {
@@ -214,38 +208,35 @@ const debtSimulationWithIncomeExpenses = async (req, res) => {
     });
   }
 
-  // Now, let's calculate how long it would take to pay off the debt
-  const monthsToPayOff = calculateDebtPayoff(debtAmount, interestRate, availablePayment);
-  const totalInterest = calculateDebtInterest(debtAmount, interestRate, monthsToPayOff, availablePayment);
+  const simulation = simulateDebtPayoff(debtAmount, interestRate, availablePayment);
 
-  // Send result in LKR
-  res.json({ months: monthsToPayOff, totalInterest, availablePayment });
+  res.json({
+    months: simulation.months,
+    totalInterest: simulation.totalInterest,
+    availablePayment: availablePayment,
+  });
 };
 
-const calculateDebtPayoff = (debtAmount, interestRate, monthlyPayment) => {
-  const monthlyInterest = (interestRate / 100) / 12;
+const simulateDebtPayoff = (debtAmount, annualInterestRate, monthlyPayment) => {
+  const monthlyInterestRate = (annualInterestRate / 100) / 12;
   let balance = debtAmount;
   let months = 0;
+  let totalInterest = 0;
 
   while (balance > 0) {
-    const interest = balance * monthlyInterest;
-    balance += interest - monthlyPayment;
-    months++;
-  }
-  return months;
-};
-
-const calculateDebtInterest = (debtAmount, interestRate, months, monthlyPayment) => {
-  const monthlyInterest = (interestRate / 100) / 12;
-  let totalInterest = 0;
-  let balance = debtAmount;
-
-  for (let i = 0; i < months; i++) {
-    const interest = balance * monthlyInterest;
+    const interest = balance * monthlyInterestRate;
     totalInterest += interest;
-    balance += interest - monthlyPayment; // Use the passed monthly payment here
+    const payment = Math.min(monthlyPayment, balance + interest);
+    balance += interest - payment;
+    months++;
+
+    if (months > 600) break; // Cap at 50 years
   }
-  return totalInterest;
+
+  return {
+    months,
+    totalInterest: Math.round(totalInterest * 100) / 100,
+  };
 };
 
 
